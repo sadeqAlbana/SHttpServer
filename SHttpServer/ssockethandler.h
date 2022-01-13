@@ -5,6 +5,7 @@
 #include <QTcpSocket>
 #include <QPointer>
 #include <QTimer>
+//https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Connection
 class SSocketHandler : public QObject
 {
     Q_OBJECT
