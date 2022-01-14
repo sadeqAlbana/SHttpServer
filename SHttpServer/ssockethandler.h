@@ -35,14 +35,15 @@ public:
     virtual ~SSocketHandler();
     void run();
 signals:
-    void finished();
+    void requestFinished();
     void timeout();
+    void finished();
 
 private:
     void onReadyRead();
     void handleBuffer();
     void onTimeout();
-    void onFinished(); //temp function for testing, use direct calls later
+    void onRequestFinished(); //temp function for testing, use direct calls later
     void onDisconnected();
     void onBytesWritten(qint64 bytes);
 
@@ -53,6 +54,7 @@ private:
     QTimer m_closeTimer;
     SHttpRequestManifest m_currentRequest;
     qint64 m_bytesToWrite=-1;
+    qint64 m_bytesWritten=0;
 
 
 

@@ -15,12 +15,13 @@ STcpServer::STcpServer(QObject *parent) : QTcpServer(parent)
 
 void STcpServer::incomingConnection(qintptr socketDescriptor)
 {
-    qInfo()<<"incoming connection: " << socketDescriptor;
+    //qInfo()<<"incoming connection: " << socketDescriptor;
 
     SSocketHandler *handler=new SSocketHandler(socketDescriptor);
     QThread *thread = new QThread();
     handler->moveToThread(thread);
+    connect(thread,&QThread::started,handler,&SSocketHandler::run,Qt::QueuedConnection);
+    //connect(handler,&SSocketHandler::finished,thread,&QThread::quit,Qt::QueuedConnection);
+    //connect(thread,&QThread::finished,thread,&QThread::deleteLater);
     thread->start();
-    connect(thread,&QThread::started,handler,&SSocketHandler::run);
-    //QtConcurrent::run(QThreadPool::globalInstance(),handler,&SSocketHandler::run);
 }

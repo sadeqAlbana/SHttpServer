@@ -8,14 +8,14 @@ SSocketHandler::SSocketHandler(const qintptr &socketDescriptor, QObject *parent)
   ,m_closeTimer(this)
 {
     //qDebug()<<"SSocketHandler::SSocketHandler: " <<QThread::currentThread();
-    m_closeTimer.setInterval(30*1000);
+    m_closeTimer.setInterval(5*1000);
     m_closeTimer.setSingleShot(true);
 
 }
 
 SSocketHandler::~SSocketHandler()
 {
-    m_socket->deleteLater();
+    //m_socket->deleteLater();
 }
 
 void SSocketHandler::run()
@@ -32,8 +32,9 @@ void SSocketHandler::run()
 
     connect(m_socket,&QTcpSocket::readyRead,this,&SSocketHandler::onReadyRead);
     connect(&m_closeTimer,&QTimer::timeout,this,&SSocketHandler::onTimeout);
-    connect(this,&SSocketHandler::finished,this,&SSocketHandler::onFinished);
+    connect(this,&SSocketHandler::requestFinished,this,&SSocketHandler::onRequestFinished);
     connect(m_socket,&QTcpSocket::disconnected,this,&SSocketHandler::onDisconnected);
+    connect(m_socket,&QTcpSocket::bytesWritten,this,&SSocketHandler::onBytesWritten);
 
     m_closeTimer.start();
     QEventLoop eventLoop;
@@ -43,7 +44,7 @@ void SSocketHandler::run()
 void SSocketHandler::onReadyRead()
 {
     m_closeTimer.stop();
-    qDebug()<<Q_FUNC_INFO<< " " <<QThread::currentThread();
+    //qDebug()<<Q_FUNC_INFO<< " " <<QThread::currentThread();
     m_buffer.append(m_socket->readAll());
     handleBuffer();
     m_closeTimer.start();
@@ -58,10 +59,12 @@ void SSocketHandler::onTimeout()
 this method is called everytime an http request is fully received
 you must handle the request content and write the reply here
 */
-void SSocketHandler::onFinished()
+void SSocketHandler::onRequestFinished()
 {
     m_currentRequest=SHttpRequestManifest();
     m_bytesToWrite=-1;
+
+    //must use the router here !
     QByteArray m_body=QByteArray();
     QString replyTextFormat(
            "HTTP/1.1 %1 OK\r\n"
@@ -75,7 +78,6 @@ void SSocketHandler::onFinished()
     QString reply=R"({"test":1})";
     replyTextFormat=replyTextFormat.arg(200).arg("application/json;charset=UTF-8").arg(reply.size()).arg(reply);
    m_socket->write(replyTextFormat.toUtf8());
-   qDebug()<<"written";
 }
 
 void SSocketHandler::onDisconnected()
@@ -86,13 +88,33 @@ void SSocketHandler::onDisconnected()
 
 void SSocketHandler::onBytesWritten(qint64 bytes)
 {
+    m_bytesWritten+=bytes;
+    if(m_bytesWritten>=m_bytesToWrite){ //>=
+        // if(response if fully written, then check the Connection header to determine wether to close the connection or not
+
+        if(m_currentRequest.m_headersPairs.contains("Connection")){
+            QString connection=m_currentRequest.m_headersPairs["Connection"];
+            if(connection==QStringLiteral("close")){
+                m_socket->close(); //close calls disconnectFromHost() internally !
+                emit finished();
+            }
+        }
+
+        m_bytesToWrite=-1;
+        m_bytesWritten=0;
+
+        //start accepting another request?
+    }
 }
 
 
 void SSocketHandler::handleBuffer()
 {
-    if(m_currentRequest.m_invalid)
+    if(m_currentRequest.m_invalid){
+        qInfo()<<"invalid request !";
+        emit finished();
         return;
+    }
 
     if(!m_currentRequest.m_passedFirst){
         if(m_buffer.size()<3)
@@ -108,10 +130,12 @@ void SSocketHandler::handleBuffer()
         QStringList firstLineItems=firstLine.split(' ');
         QString method=firstLineItems[0];
         method=method.trimmed();
-        if(method != QStringLiteral("GET") &&
-                method != QStringLiteral("POST") &&
-                method != QStringLiteral("PUT") &&
-                method != QStringLiteral("DELETE"))
+        if(method != QStringLiteral("GET")     &&
+           method != QStringLiteral("POST")    &&
+           method != QStringLiteral("PUT")     &&
+           method != QStringLiteral("DELETE")  &&
+           method != QStringLiteral("OPTIONS") &&
+           method != QStringLiteral("HEAD"))
         {
             m_currentRequest.m_invalid=true;
             this->deleteLater();
@@ -173,12 +197,12 @@ void SSocketHandler::handleBuffer()
             m_currentRequest.m_body=m_buffer.mid(0,contentLength);
             m_currentRequest.m_finished=true;
             m_closeTimer.stop();
-            emit finished();
+            emit requestFinished();
         }
     }else{
         m_currentRequest.m_finished=true;
         m_closeTimer.stop();
-        emit finished();
+        emit requestFinished();
     }
     qDebug()<<"Body: "<<m_currentRequest.m_body;
 }

@@ -11,13 +11,13 @@ CONFIG += c++11
 
 SOURCES += \
     shttprequest.cpp \
-    shttpserver.cpp \
+    shttpresponse.cpp \
     ssockethandler.cpp \
     stcpserver.cpp
 
 HEADERS += \
     shttprequest.h \
-    shttpserver.h \
+    shttpresponse.h \
     ssockethandler.h \
     stcpserver.h
 
