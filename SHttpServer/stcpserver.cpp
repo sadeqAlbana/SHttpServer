@@ -1,6 +1,10 @@
 #include "stcpserver.h"
 #include <QTcpSocket>
 #include <QDebug>
+#include <QThread>
+#include <QThreadPool>
+#include "ssockethandler.h"
+#include <QtConcurrent>
 STcpServer::STcpServer(QObject *parent) : QTcpServer(parent)
 {
 
@@ -12,11 +16,11 @@ STcpServer::STcpServer(QObject *parent) : QTcpServer(parent)
 void STcpServer::incomingConnection(qintptr socketDescriptor)
 {
     qInfo()<<"incoming connection: " << socketDescriptor;
-    QTcpSocket *socket=new QTcpSocket;
-    if(socket->setSocketDescriptor(socketDescriptor)){
-        addPendingConnection(socket);
-    }else{
-        qWarning()<<"failed to claim socket: " << socketDescriptor;
-        delete socket; //delete and ignore the socket if it failed to claim the socketDescriptor !
-    }
+
+    SSocketHandler *handler=new SSocketHandler(socketDescriptor);
+    QThread *thread = new QThread();
+    handler->moveToThread(thread);
+    thread->start();
+    connect(thread,&QThread::started,handler,&SSocketHandler::run);
+    //QtConcurrent::run(QThreadPool::globalInstance(),handler,&SSocketHandler::run);
 }
