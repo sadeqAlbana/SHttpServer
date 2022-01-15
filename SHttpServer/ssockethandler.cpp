@@ -4,6 +4,10 @@
 #include <QTcpSocket>
 #include <QThread>
 #include <QEventLoop>
+#include "router.h"
+#include "shttprequest.h"
+#include "shttpresponse.h"
+#include <QJsonArray>
 SSocketHandler::SSocketHandler(const qintptr &socketDescriptor, QObject *parent) : QObject(parent),m_socketDescriptor(socketDescriptor)
   ,m_closeTimer(this)
 {
@@ -53,7 +57,8 @@ void SSocketHandler::onTimeout()
 {
     qDebug()<<"timeout";
     disconnect(m_socket,&QTcpSocket::readyRead,this,&SSocketHandler::onReadyRead);
-    m_socket->deleteLater();
+    emit finished();
+    //m_socket->deleteLater();
 }
 /*
 this method is called everytime an http request is fully received
@@ -61,8 +66,17 @@ you must handle the request content and write the reply here
 */
 void SSocketHandler::onRequestFinished()
 {
-    m_currentRequest=SHttpRequestManifest();
     m_bytesToWrite=-1;
+
+    SHttpRequest request;
+    request.m_url=m_currentRequest.m_path;
+    request.m_body=m_currentRequest.m_body;
+    request.m_headers=m_currentRequest.m_headersPairs;
+    request.m_operation=Http::GetOperation;
+    Router router;
+    SHttpResponse res = router.route(&request);
+
+
 
     //must use the router here !
     QByteArray m_body=QByteArray();
@@ -75,15 +89,20 @@ void SSocketHandler::onRequestFinished()
            "\r\n"
            "%4"
        );
-    QString reply=R"({"test":1})";
-    replyTextFormat=replyTextFormat.arg(200).arg("application/json;charset=UTF-8").arg(reply.size()).arg(reply);
+    QByteArray replyData=rawData(res.data());
+    replyTextFormat=replyTextFormat.arg(res.statusCode())
+            .arg(QString(mapContentType(res.data().type())))
+            .arg(replyData.size()).arg(QString(replyData));
    m_socket->write(replyTextFormat.toUtf8());
+   m_currentRequest=SHttpRequestManifest();
+
 }
 
 void SSocketHandler::onDisconnected()
 {
     qInfo()<<QString("socket %1 disconnected").arg(m_socket->socketDescriptor());
-    this->deleteLater();
+    emit finished();
+    //this->deleteLater();
 }
 
 void SSocketHandler::onBytesWritten(qint64 bytes)
@@ -138,7 +157,8 @@ void SSocketHandler::handleBuffer()
            method != QStringLiteral("HEAD"))
         {
             m_currentRequest.m_invalid=true;
-            this->deleteLater();
+            emit finished();
+            //this->deleteLater();
             return;
         }else{
            m_currentRequest.m_method=method;
@@ -147,17 +167,19 @@ void SSocketHandler::handleBuffer()
         QString path=firstLineItems[1];
         if(path.contains(' ')){
             m_currentRequest.m_invalid=true;
-            this->deleteLater();
+            emit finished();
+            //this->deleteLater();
             return;
         }else{
             m_currentRequest.m_path=path;
-           // qInfo()<<"path: " << m_path;
+            //qInfo()<<"path: " << m_currentRequest.m_path;
         }
 
         QString httpVersion=firstLineItems[2];
         if(httpVersion!=QStringLiteral("HTTP/1.1")){
             m_currentRequest.m_invalid=true;
-            this->deleteLater();
+            emit finished();
+            //this->deleteLater();
             return;
         }else{
             m_currentRequest.m_httpVersion=httpVersion;
@@ -205,5 +227,131 @@ void SSocketHandler::handleBuffer()
         emit requestFinished();
     }
     qDebug()<<"Body: "<<m_currentRequest.m_body;
+}
+
+QByteArray SSocketHandler::mapContentType(const QVariant::Type type)
+{
+    //Q_D(Request);
+
+//    if(d->m_response->headers().contains("content-type"))
+//        return d_ptr->m_response->headers().value("content-type");
+
+    QByteArray contentType;
+    //QMetaType::Type type=static_cast<QMetaType::Type>(type.type());
+    switch (type) {
+    case QMetaType::QJsonObject  :
+    case QMetaType::QJsonValue   :
+    case QMetaType::QJsonArray   :
+    case QMetaType::QJsonDocument: contentType = "application/json;charset=UTF-8"; break;
+    case QMetaType::QImage       : contentType = "image/png";        break;
+    case QMetaType::QString      : contentType = "text/plain";       break;
+
+    default                      :                                   break;
+    }
+    return contentType;
+}
+
+QByteArray SSocketHandler::rawData(const QVariant &data)
+{
+    QMetaType::Type type=static_cast<QMetaType::Type>(data.type());
+
+    /**************************json**************************/
+    if(type==QMetaType::QJsonObject)
+    {
+        QJsonObject object=data.toJsonObject();
+        QJsonDocument document;
+        document.setObject(object);
+        return document.toJson(QJsonDocument::Compact);
+    }
+
+    if(type==QMetaType::QJsonArray)
+    {
+        QJsonArray array=data.toJsonArray();
+        QJsonDocument document;
+        document.setArray(array);
+        return document.toJson(QJsonDocument::Compact);
+    }
+
+    if(type==QMetaType::QJsonDocument)
+    {
+        return data.toJsonDocument().toJson(QJsonDocument::Compact);
+    }
+
+    if(type==QMetaType::QJsonValue)
+    {
+        QJsonValue jsonValue=data.toJsonValue();
+
+        if(jsonValue.type()==QJsonValue::Array)
+        {
+            QJsonArray array=jsonValue.toArray();
+            QJsonDocument document;
+            document.setArray(array);
+            return document.toJson(QJsonDocument::Compact);
+        }
+
+        if(jsonValue.type()==QJsonValue::Object)
+        {
+            QJsonObject object=jsonValue.toObject();
+            QJsonDocument document;
+            document.setObject(object);
+            return document.toJson(QJsonDocument::Compact);
+        }
+        if(jsonValue.type()==QJsonValue::String)
+        {
+            return jsonValue.toString().toUtf8();
+        }
+        if(jsonValue==QJsonValue::Double)
+        {
+            return QString::number(jsonValue.toDouble()).toUtf8();
+        }
+        if(jsonValue.type()==QJsonValue::Bool)
+        {
+            return jsonValue.toBool() ? QByteArray("1") : QByteArray("0");
+        }
+
+    }
+
+    /**********************end json**************************/
+
+    if(type==QMetaType::QString)
+        return data.toString().toUtf8();
+
+    if(type==QMetaType::Int)
+        return QString::number(data.toInt()).toUtf8();
+
+    if(type==QMetaType::Double)
+        return QString::number(data.toDouble()).toUtf8();
+
+    if(type==QMetaType::Float)
+        return QString::number(data.toFloat()).toUtf8();
+
+    if(type==QMetaType::Long || type==QMetaType::LongLong)
+        return QString::number(data.toLongLong()).toUtf8();
+
+    if(type==QMetaType::UInt)
+        return QString::number(data.toUInt()).toUtf8();
+
+    if(type==QMetaType::ULongLong)
+        return QString::number(data.toULongLong()).toUtf8();
+
+    if(type==QMetaType::QByteArray)
+        return data.toByteArray();
+#ifdef QT_HAVE_GUI
+    if(type==QMetaType::QImage)
+    {
+        QImage image=data.value<QImage>();
+        QByteArray imageData;
+        QBuffer buffer(&imageData);
+        buffer.open(QIODevice::WriteOnly);
+        image.save(&buffer,"PNG");
+        buffer.close();
+        return imageData;
+    }
+#endif
+
+
+    qDebug()<<"Request::rawData : unsupported QVariant type";
+
+    return QByteArray();
 }
 

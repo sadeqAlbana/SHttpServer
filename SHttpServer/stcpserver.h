@@ -8,10 +8,13 @@ class STcpServer : public QTcpServer
     Q_OBJECT
 public:
     explicit STcpServer(QObject *parent = nullptr);
-    void incomingConnection(qintptr socketDescriptor) final;
 
 
 signals:
+
+private:
+    void incomingConnection(qintptr socketDescriptor) final;
+
 
 };
 

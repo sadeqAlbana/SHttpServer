@@ -5,6 +5,7 @@
 #include <QTcpSocket>
 #include <QPointer>
 #include <QTimer>
+#include "HttpCommon.h"
 //https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Connection
 
 /*
@@ -22,7 +23,7 @@ struct SHttpRequestManifest{
     QString m_method;
     QString m_httpVersion;
     QString m_path;
-    QHash<QByteArray,QByteArray> m_headersPairs;
+    HttpHeaderList m_headersPairs;
     QByteArray m_body;
 
 };
@@ -46,6 +47,11 @@ private:
     void onRequestFinished(); //temp function for testing, use direct calls later
     void onDisconnected();
     void onBytesWritten(qint64 bytes);
+    QByteArray mapContentType(const QVariant::Type type);
+    QByteArray rawData(const QVariant &data);
+
+
+
 
 private:
     qintptr m_socketDescriptor;

@@ -21,7 +21,9 @@ void STcpServer::incomingConnection(qintptr socketDescriptor)
     QThread *thread = new QThread();
     handler->moveToThread(thread);
     connect(thread,&QThread::started,handler,&SSocketHandler::run,Qt::QueuedConnection);
-    //connect(handler,&SSocketHandler::finished,thread,&QThread::quit,Qt::QueuedConnection);
-    //connect(thread,&QThread::finished,thread,&QThread::deleteLater);
+    connect(handler,&SSocketHandler::finished,thread,&QThread::quit,Qt::QueuedConnection);
+    connect(thread,&QThread::finished,thread,&QObject::deleteLater);
+    connect(thread,&QThread::finished,handler,&QObject::deleteLater);
+
     thread->start();
 }
