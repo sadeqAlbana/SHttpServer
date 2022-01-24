@@ -9,6 +9,8 @@ class Controller : public QObject
     Q_OBJECT
 public:
     Controller(QObject *parent = nullptr);
+    virtual ~Controller();
+
 };
 
 #endif // CONTROLLER_H

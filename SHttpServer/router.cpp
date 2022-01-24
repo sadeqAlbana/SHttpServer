@@ -67,13 +67,15 @@ SHttpResponse Router::route(SHttpRequest *request)
 
             //SHttpResponse res =
             if(metaObject){
-                qDebug()<<"Reached here !";
+                //qDebug()<<"Reached here !";
                 Controller *controller = qobject_cast<Controller *>(metaObject->newInstance());
-                qDebug()<<"created instance !";
+                //qDebug()<<"created instance !";
                 SHttpResponse res = (controller->*cb.ptr)(request);
                 //request->reply(res.data,res.statusCode);
-                qDebug()<<"and here !";
-                controller->deleteLater();
+                //qDebug()<<"and here !";
+                //controller->deleteLater();
+                delete controller;
+                qDebug()<<"controller deleted !";
 
                 return res;
 
