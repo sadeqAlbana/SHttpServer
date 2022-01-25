@@ -8,8 +8,8 @@ class Controller : public QObject
 {
     Q_OBJECT
 public:
-    Controller(QObject *parent = nullptr);
-    virtual ~Controller();
+    Q_INVOKABLE Controller(QObject *parent = nullptr);
+    Q_INVOKABLE virtual ~Controller();
 
 };
 

@@ -1,11 +1,12 @@
 #include "controller.h"
 #include <QDebug>
+#include <QThread>
 Controller::Controller(QObject *parent) : QObject(parent)
 {
-    qDebug()<<Q_FUNC_INFO;
+    qDebug()<<Q_FUNC_INFO << " " <<  QThread::currentThread();
 }
 
 Controller::~Controller()
 {
-    qDebug()<<"controller destroyed !";
+    qDebug()<<Q_FUNC_INFO << " " <<  QThread::currentThread();
 }

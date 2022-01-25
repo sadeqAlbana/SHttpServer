@@ -7,9 +7,9 @@ class TestController : public Controller
 {
     Q_OBJECT
 public:
-    explicit TestController(QObject *parent = nullptr);
+    Q_INVOKABLE explicit TestController(QObject *parent = nullptr);
      SHttpResponse test(SHttpRequest *request);
-     virtual ~TestController();
+     Q_INVOKABLE virtual ~TestController();
 
 signals:
 
