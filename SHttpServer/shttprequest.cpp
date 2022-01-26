@@ -1,8 +1,13 @@
 #include "shttprequest.h"
-
+#include <QJsonArray>
 SHttpRequest::SHttpRequest()
 {
 
+}
+
+QString SHttpRequest::remoteAddress()
+{
+    return m_remoteAddress;
 }
 
 Http::Operation SHttpRequest::operation() const
@@ -41,12 +46,19 @@ QString SHttpRequest::urlParameter(QString key)
 
 QJsonValue SHttpRequest::json(QString key)
 {
-    return m_mappedData.toJsonObject()[key];
+    QJsonDocument doc=QJsonDocument::fromJson(m_body);
+    return doc.object()[key];
 }
 
 QJsonValue SHttpRequest::json()
 {
-    return m_mappedData.toJsonValue();
+    QJsonDocument doc=QJsonDocument::fromJson(m_body); //just a temp fix
+    if(doc.isObject())
+       return doc.object();
+    else{
+        return doc.array();
+    }
+    return QJsonValue();
 }
 
 QByteArray SHttpRequest::header(QByteArray key)

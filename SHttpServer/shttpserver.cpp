@@ -17,14 +17,14 @@ bool SHttpServer::setSSlConfiguration(const QString &crtFilePath, const QString 
     QFile fileForCrt( crtFilePath );
     if ( !fileForCrt.open( QIODevice::ReadOnly ) )
     {
-        qDebug() << "SslServerManage::listen: error: can not open file:" << crtFilePath;
+        qDebug() << "SHttpServer::setSSlConfiguration: error: can not open file:" << crtFilePath;
         return false;
     }
 
     QFile fileForKey( keyFilePath );
     if ( !fileForKey.open( QIODevice::ReadOnly ) )
     {
-        qDebug() << "SslServerManage::listen: error: can not open file:" << keyFilePath;
+        qDebug() << "SHttpServer::setSSlConfiguration: error: can not open file:" << keyFilePath;
         return false;
     }
 
@@ -37,7 +37,7 @@ bool SHttpServer::setSSlConfiguration(const QString &crtFilePath, const QString 
         QFile fileForCa( caFile.first );
         if ( !fileForCa.open( QIODevice::ReadOnly ) )
         {
-            qDebug() << "SslServerManage::listen: error: can not open file:" << caFile.first;
+            qDebug() << "SHttpServer::setSSlConfiguration: error: can not open file:" << caFile.first;
             return false;
         }
 
@@ -55,17 +55,25 @@ bool SHttpServer::setSSlConfiguration(const QString &crtFilePath, const QString 
     return true;
 }
 
-void SHttpServer::addRoutine(ServerCallBack routine)
+void SHttpServer::installConnectionRoutine(ConnectionRoutineCallBack routine)
 {
-    m_routines << routine;
+    m_connectionCallbacks << routine;
 }
+
+void SHttpServer::installRequestRoutine(RequestRoutineCallBack routine)
+{
+    m_requestCallbacks << routine;
+}
+
+
 /*Note: If you want to handle an incoming connection as a new QTcpSocket object in another thread
  *  you have to pass the socketDescriptor to the other thread and create the QTcpSocket object there
  *   and use its setSocketDescriptor() method.*/
 
 void SHttpServer::incomingConnection(qintptr socketDescriptor)
 {
-    SSocketHandler *handler=new SSocketHandler(socketDescriptor,*this,m_routines,m_sslConfig);
+    qInfo()<< "New Connection !";
+    SSocketHandler *handler=new SSocketHandler(socketDescriptor,*this,m_connectionCallbacks,m_requestCallbacks,m_sslConfig);
     QThread *thread = new QThread();
     handler->moveToThread(thread);
     connect(thread,&QThread::started,handler,&SSocketHandler::run,Qt::QueuedConnection);

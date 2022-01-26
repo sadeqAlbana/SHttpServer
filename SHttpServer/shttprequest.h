@@ -46,6 +46,7 @@ public:
     QVariant m_mappedData;
     QUrl m_url;
     HttpHeaderList m_headers;
+    QString m_remoteAddress;
 
 signals:
 

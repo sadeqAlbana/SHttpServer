@@ -3,8 +3,11 @@
 #include <QObject>
 
 using HttpHeaderList = QHash<QByteArray,QByteArray>;
-using ServerCallBack = std::function<bool ()>;
-using ServerCallBackList = QList<ServerCallBack>;
+using ConnectionRoutineCallBack = std::function<bool ()>;
+using ConnectionRoutineCallBackList = QList<ConnectionRoutineCallBack>;
+class SHttpRequest;
+using RequestRoutineCallBack = std::function<bool (SHttpRequest *)>;
+using RequestRoutineCallBackList = QList<RequestRoutineCallBack>;
 namespace Http {
 
     Q_NAMESPACE;

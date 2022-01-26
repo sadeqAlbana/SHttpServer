@@ -82,7 +82,6 @@ SHttpResponse Router::route(SHttpRequest *request)
                 //qDebug()<<"and here !";
                 controller->deleteLater();
                 //delete controller;
-                qDebug()<<"controller should be deleted !";
 
                 return res;
 

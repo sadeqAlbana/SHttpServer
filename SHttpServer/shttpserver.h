@@ -18,14 +18,17 @@ public:
                              const QList< QPair< QString, QSsl::EncodingFormat > > &caFileList = {},
                              const QSslSocket::PeerVerifyMode &peerVerifyMode=QSslSocket::VerifyNone);
 
-    void addRoutine(ServerCallBack routine);
+    void installConnectionRoutine(ConnectionRoutineCallBack routine);
+    void installRequestRoutine(RequestRoutineCallBack routine);
+
 
 signals:
 
 private:
     void incomingConnection(qintptr socketDescriptor) final;
     QSslConfiguration m_sslConfig;
-    ServerCallBackList m_routines;
+    ConnectionRoutineCallBackList m_connectionCallbacks;
+    RequestRoutineCallBackList m_requestCallbacks;
 
 
 };

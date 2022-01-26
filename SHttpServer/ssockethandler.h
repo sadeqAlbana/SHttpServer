@@ -37,7 +37,10 @@ class SSocketHandler : public QObject
 {
     Q_OBJECT
 public:
-    explicit SSocketHandler(const qintptr &socketDescriptor, const Router &router, const ServerCallBackList &routines=ServerCallBackList(),
+    explicit SSocketHandler(const qintptr &socketDescriptor,
+                            const Router &router,
+                            const ConnectionRoutineCallBackList &cCallbacks=ConnectionRoutineCallBackList(),
+                            const RequestRoutineCallBackList &rCallbacks = RequestRoutineCallBackList(),
                             const QSslConfiguration &sslConfig=QSslConfiguration(), QObject *parent = nullptr);
     virtual ~SSocketHandler();
     void run();
@@ -69,7 +72,8 @@ private:
     qint64 m_bytesWritten=0;
     Router *m_router;
     QSslConfiguration m_sslConfig;
-    ServerCallBackList m_routines;
+    ConnectionRoutineCallBackList m_connectionCallbacks;
+    RequestRoutineCallBackList m_requestCallbacks;
 };
 
 #endif // SSOCKETHANDLER_H

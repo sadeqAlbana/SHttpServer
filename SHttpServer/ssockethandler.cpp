@@ -8,15 +8,19 @@
 #include "shttprequest.h"
 #include "shttpresponse.h"
 #include <QJsonArray>
-
-SSocketHandler::SSocketHandler(const qintptr &socketDescriptor, const Router &router, const ServerCallBackList &routines,
+#include <QHostAddress>
+SSocketHandler::SSocketHandler(const qintptr &socketDescriptor, const Router &router,
+                               const ConnectionRoutineCallBackList &cCallbacks,
+                               const RequestRoutineCallBackList &rCallbacks,
                                const QSslConfiguration &sslConfig,
                                QObject *parent): QObject(parent),
     m_socketDescriptor(socketDescriptor)
-  ,m_closeTimer(this),m_router(new Router(router)),m_sslConfig(sslConfig), m_routines(routines)
+  ,m_closeTimer(this),m_router(new Router(router)),m_sslConfig(sslConfig),
+    m_connectionCallbacks(cCallbacks),
+    m_requestCallbacks(rCallbacks)
 {
     //be warned that the constructor is created on the main thread !
-    m_closeTimer.setInterval(10*1000);
+    m_closeTimer.setInterval(30*1000);
     m_closeTimer.setSingleShot(true);
 }
 
@@ -33,15 +37,15 @@ void SSocketHandler::run()
         sslSocket->setSslConfiguration(m_sslConfig);
         //sslSocket->ignoreSslErrors();
 
-        QObject::connect( sslSocket, &QSslSocket::encrypted, [ this, sslSocket ]()
-        {
-            qDebug()<<"encrypted: !";
-        } );
+//        QObject::connect( sslSocket, &QSslSocket::encrypted, [ this, sslSocket ]()
+//        {
+//            qDebug()<<"encrypted: !";
+//        } );
 
-        QObject::connect( sslSocket, QOverload<const QList<QSslError> &>::of(&QSslSocket::sslErrors), [ this, sslSocket ](const QList<QSslError> &errors)
-        {
-            qDebug()<<"ssl errors !";
-        } );
+//        QObject::connect( sslSocket, QOverload<const QList<QSslError> &>::of(&QSslSocket::sslErrors), [ this, sslSocket ](const QList<QSslError> &errors)
+//        {
+//            qDebug()<<"ssl errors !";
+//        } );
 
         m_socket=sslSocket;
 
@@ -68,6 +72,16 @@ void SSocketHandler::run()
         sslSocket->startServerEncryption();
     }
 
+    //call routines
+    bool passedRoutines=true;
+    for(const ConnectionRoutineCallBack &routine : m_connectionCallbacks){
+        passedRoutines=routine();
+        if(!passedRoutines){
+            //return some sort of error, maybe catch an exception !
+            break;
+        }
+    }
+
     m_closeTimer.start();
     QEventLoop eventLoop;
     eventLoop.exec();
@@ -75,7 +89,7 @@ void SSocketHandler::run()
 
 void SSocketHandler::onReadyRead()
 {
-    qDebug()<<"Ready read !";
+    //qDebug()<<"Ready read !";
     m_closeTimer.stop();
     m_buffer.append(m_socket->readAll());
     handleBuffer();
@@ -95,8 +109,8 @@ you must handle the request content and write the reply here
 */
 void SSocketHandler::onRequestFinished()
 {
-    qInfo()<<"Request finished !";
-    qInfo()<<"body: " << m_currentRequest.m_body;
+    //qInfo()<<"Request finished !";
+    //qInfo()<<"body: " << m_currentRequest.m_body;
 
     m_bytesToWrite=-1;
 
@@ -105,16 +119,20 @@ void SSocketHandler::onRequestFinished()
     request.m_body=m_currentRequest.m_body;
     request.m_headers=m_currentRequest.m_headersPairs;
     request.m_operation=Http::methodtoEnum(m_currentRequest.m_method);
+    request.m_remoteAddress=m_socket->peerAddress().toString();
+
 
     //call routines
     bool passedRoutines=true;
-    for(const ServerCallBack &routine : m_routines){
-        passedRoutines=routine();
+    for(const RequestRoutineCallBack &routine : m_requestCallbacks){
+        passedRoutines=routine(&request);
         if(!passedRoutines){
             //return some sort of error, maybe catch an exception !
             break;
         }
     }
+
+
     SHttpResponse res = m_router->route(&request);
     QByteArray m_body=QByteArray();
     QByteArray replyData=toRawData(res.data());
@@ -131,7 +149,6 @@ void SSocketHandler::onRequestFinished()
         .arg(replyData.size()).arg(QString(replyData));
 
    m_socket->write(replyTextFormat.toUtf8());
-
    //now we wait for the bytes to be written, new requests will only be accepted when bytes are written
 }
 
@@ -159,6 +176,7 @@ void SSocketHandler::onBytesWritten(qint64 bytes)
         m_bytesWritten=0;
         //make current request invalid
         m_currentRequest=SHttpRequestManifest();
+        m_buffer=QByteArray(); //removing this line causes a problem in multiple requests !
         //start accepting another request?
     }
 }
@@ -166,8 +184,9 @@ void SSocketHandler::onBytesWritten(qint64 bytes)
 
 void SSocketHandler::handleBuffer()
 {
+    //qDebug()<<"Handle buffer called !";
     if(m_currentRequest.m_invalid){
-        //qInfo()<<"invalid request !";
+        qDebug()<<"invalid request !";
         emit finished();
         return;
     }
@@ -240,8 +259,9 @@ void SSocketHandler::handleBuffer()
 
         QStringList headersList=headersPart.split("\r\n");
         for(const QString &header : headersList){
-            QStringList splitted=header.split(' ');
-            m_currentRequest.m_headersPairs.insert(splitted[0].remove(':').toUtf8(),splitted[1].toUtf8());
+            QStringList splitted=header.split(':');
+
+            m_currentRequest.m_headersPairs.insert(splitted[0].toUtf8(),splitted[1].mid(1).toUtf8());
         }
         //qDebug()<<"headers";
         //qDebug()<<m_headersPairs;
