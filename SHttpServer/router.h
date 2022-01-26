@@ -4,7 +4,7 @@
 #include <QMap>
 #include "functional"
 #include "abstractmiddleware.h"
-#include "HttpCommon.h"
+#include "httpcommon.h"
 #include "shttprequest.h"
 #include "controller.h"
 #include "shttpresponse.h"
@@ -34,6 +34,8 @@ class Router
 
 public:
     Router();
+    //Router(const Router &other);
+    ~Router();
     SHttpResponse route(SHttpRequest *request);
 
 
@@ -126,7 +128,7 @@ public:
 
 
 
-private:
+protected:
     MemberCallbacks getRoutes;
     MemberCallbacks postRoutes;
     MemberCallbacks headRoutes;

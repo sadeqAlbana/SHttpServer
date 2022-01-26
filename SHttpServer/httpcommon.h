@@ -3,9 +3,13 @@
 #include <QObject>
 
 using HttpHeaderList = QHash<QByteArray,QByteArray>;
+using ServerCallBack = std::function<bool ()>;
+using ServerCallBackList = QList<ServerCallBack>;
 namespace Http {
 
     Q_NAMESPACE;
+
+
 
     enum Operation{
         HeadOperation       = 1,
@@ -17,6 +21,8 @@ namespace Http {
         OptionsOperation    = 7
     };
     Q_ENUM_NS(Operation)
+
+
 
     enum StatusCode{
 
@@ -102,6 +108,10 @@ namespace Http {
     };
 
     Q_ENUM_NS(StatusCode)
+
+
+
+    Operation methodtoEnum(const QString &op);
 
 }
 #endif // HTTPCOMMON_H

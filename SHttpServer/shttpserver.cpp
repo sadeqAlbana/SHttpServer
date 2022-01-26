@@ -54,13 +54,18 @@ bool SHttpServer::setSSlConfiguration(const QString &crtFilePath, const QString 
 
     return true;
 }
+
+void SHttpServer::addRoutine(ServerCallBack routine)
+{
+    m_routines << routine;
+}
 /*Note: If you want to handle an incoming connection as a new QTcpSocket object in another thread
  *  you have to pass the socketDescriptor to the other thread and create the QTcpSocket object there
  *   and use its setSocketDescriptor() method.*/
 
 void SHttpServer::incomingConnection(qintptr socketDescriptor)
 {
-    SSocketHandler *handler=new SSocketHandler(socketDescriptor,m_sslConfig);
+    SSocketHandler *handler=new SSocketHandler(socketDescriptor,*this,m_routines,m_sslConfig);
     QThread *thread = new QThread();
     handler->moveToThread(thread);
     connect(thread,&QThread::started,handler,&SSocketHandler::run,Qt::QueuedConnection);

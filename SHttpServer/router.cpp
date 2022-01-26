@@ -9,10 +9,17 @@
 #include <QThread>
 Router::Router()
 {
-    Route::get("/test",[](SHttpRequest *request) ->SHttpResponse{
-        return SHttpResponse(QJsonObject{{"tests",1}});
-    });
-    Route::get("/cont",&TestController::test);
+
+}
+
+//Router::Router(const Router &other) : getRoutes(other.getRoutes),postRoutes(other.postRoutes),headRoutes(other.headRoutes),putRoutes(other.putRoutes),DeleteRoutes(other.DeleteRoutes)
+//{
+
+//}
+
+Router::~Router()
+{
+
 }
 
 SHttpResponse Router::route(SHttpRequest *request)

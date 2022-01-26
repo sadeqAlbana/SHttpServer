@@ -5,7 +5,7 @@
 #include <QTcpSocket>
 #include <QPointer>
 #include <QTimer>
-#include "HttpCommon.h"
+#include "httpcommon.h"
 #include <QSslSocket>
 #include <QSslConfiguration>
 class Router;
@@ -37,7 +37,7 @@ class SSocketHandler : public QObject
 {
     Q_OBJECT
 public:
-    explicit SSocketHandler(const qintptr &socketDescriptor,
+    explicit SSocketHandler(const qintptr &socketDescriptor, const Router &router, const ServerCallBackList &routines=ServerCallBackList(),
                             const QSslConfiguration &sslConfig=QSslConfiguration(), QObject *parent = nullptr);
     virtual ~SSocketHandler();
     void run();
@@ -69,6 +69,7 @@ private:
     qint64 m_bytesWritten=0;
     Router *m_router;
     QSslConfiguration m_sslConfig;
+    ServerCallBackList m_routines;
 };
 
 #endif // SSOCKETHANDLER_H

@@ -12,6 +12,7 @@ CONFIG += c++11
 SOURCES += \
     abstractmiddleware.cpp \
     controller.cpp \
+    httpcommon.cpp \
     router.cpp \
     shttprequest.cpp \
     shttpresponse.cpp \
@@ -20,9 +21,9 @@ SOURCES += \
     testcontroller.cpp
 
 HEADERS += \
-    HttpCommon.h \
     abstractmiddleware.h \
     controller.h \
+    httpcommon.h \
     router.h \
     shttprequest.h \
     shttpresponse.h \

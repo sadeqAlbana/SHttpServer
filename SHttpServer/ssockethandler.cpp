@@ -9,11 +9,11 @@
 #include "shttpresponse.h"
 #include <QJsonArray>
 
-SSocketHandler::SSocketHandler(const qintptr &socketDescriptor,
+SSocketHandler::SSocketHandler(const qintptr &socketDescriptor, const Router &router, const ServerCallBackList &routines,
                                const QSslConfiguration &sslConfig,
                                QObject *parent): QObject(parent),
     m_socketDescriptor(socketDescriptor)
-  ,m_closeTimer(this),m_router(new Router),m_sslConfig(sslConfig)
+  ,m_closeTimer(this),m_router(new Router(router)),m_sslConfig(sslConfig), m_routines(routines)
 {
     //be warned that the constructor is created on the main thread !
     m_closeTimer.setInterval(10*1000);
@@ -95,8 +95,8 @@ you must handle the request content and write the reply here
 */
 void SSocketHandler::onRequestFinished()
 {
-    qDebug()<<"Request finished !";
-    qDebug()<<"body: " << m_currentRequest.m_body;
+    qInfo()<<"Request finished !";
+    qInfo()<<"body: " << m_currentRequest.m_body;
 
     m_bytesToWrite=-1;
 
@@ -104,9 +104,18 @@ void SSocketHandler::onRequestFinished()
     request.m_url=m_currentRequest.m_path;
     request.m_body=m_currentRequest.m_body;
     request.m_headers=m_currentRequest.m_headersPairs;
-    request.m_operation=Http::GetOperation;
-    SHttpResponse res = m_router->route(&request);
+    request.m_operation=Http::methodtoEnum(m_currentRequest.m_method);
 
+    //call routines
+    bool passedRoutines=true;
+    for(const ServerCallBack &routine : m_routines){
+        passedRoutines=routine();
+        if(!passedRoutines){
+            //return some sort of error, maybe catch an exception !
+            break;
+        }
+    }
+    SHttpResponse res = m_router->route(&request);
     QByteArray m_body=QByteArray();
     QByteArray replyData=toRawData(res.data());
     QString replyTextFormat=QString(

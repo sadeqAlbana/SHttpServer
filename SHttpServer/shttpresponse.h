@@ -1,6 +1,6 @@
 #ifndef SHTTPRESPONSE_H
 #define SHTTPRESPONSE_H
-#include "HttpCommon.h"
+#include "httpcommon.h"
 #include <QVariant>
 class SHttpResponse
 {

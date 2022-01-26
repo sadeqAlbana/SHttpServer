@@ -10,6 +10,8 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    server.get("/test",[](SHttpRequest *request){return SHttpResponse(QJsonObject{{"method",Q_FUNC_INFO}});});
+
 
     return a.exec();
 }

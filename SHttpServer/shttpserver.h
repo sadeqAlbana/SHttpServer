@@ -3,12 +3,12 @@
 
 #include <QTcpServer>
 #include <QSslConfiguration>
-
+#include "httpcommon.h"
+#include "router.h"
 //these are functions that are called inside the request thread prior to socket creation !
-using ServerCallBack = std::function<bool ()>;
-using ServerCallBackList = QList<ServerCallBack>;
 
-class SHttpServer : public QTcpServer
+
+class SHttpServer : public QTcpServer, public Router
 {
     Q_OBJECT
 public:
@@ -18,12 +18,14 @@ public:
                              const QList< QPair< QString, QSsl::EncodingFormat > > &caFileList = {},
                              const QSslSocket::PeerVerifyMode &peerVerifyMode=QSslSocket::VerifyNone);
 
+    void addRoutine(ServerCallBack routine);
+
 signals:
 
 private:
     void incomingConnection(qintptr socketDescriptor) final;
     QSslConfiguration m_sslConfig;
-    ServerCallBackList m_cbList;
+    ServerCallBackList m_routines;
 
 
 };

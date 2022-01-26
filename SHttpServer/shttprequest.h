@@ -2,7 +2,7 @@
 #define SHTTPREQUEST_H
 
 #include <QObject>
-#include "HttpCommon.h"
+#include "httpcommon.h"
 #include <QUrl>
 #include <QVariant>
 #include <QJsonObject>
