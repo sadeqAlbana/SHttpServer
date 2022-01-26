@@ -8,37 +8,65 @@
 #include "shttprequest.h"
 #include "shttpresponse.h"
 #include <QJsonArray>
-SSocketHandler::SSocketHandler(const qintptr &socketDescriptor, QObject *parent) : QObject(parent),m_socketDescriptor(socketDescriptor)
-  ,m_closeTimer(this)
-{
-    //qDebug()<<"SSocketHandler::SSocketHandler: " <<QThread::currentThread();
-    m_closeTimer.setInterval(5*1000);
-    m_closeTimer.setSingleShot(true);
 
+SSocketHandler::SSocketHandler(const qintptr &socketDescriptor,
+                               const QSslConfiguration &sslConfig,
+                               QObject *parent): QObject(parent),
+    m_socketDescriptor(socketDescriptor)
+  ,m_closeTimer(this),m_router(new Router),m_sslConfig(sslConfig)
+{
+    //be warned that the constructor is created on the main thread !
+    m_closeTimer.setInterval(10*1000);
+    m_closeTimer.setSingleShot(true);
 }
 
 SSocketHandler::~SSocketHandler()
 {
-    //m_socket->deleteLater();
+    delete m_router;
+    m_socket->deleteLater();
 }
 
 void SSocketHandler::run()
 {
-    m_socket= new QTcpSocket();
+    if(!m_sslConfig.isNull()){
+        QSslSocket *sslSocket= new QSslSocket();
+        sslSocket->setSslConfiguration(m_sslConfig);
+        //sslSocket->ignoreSslErrors();
 
-    //qDebug()<<Q_FUNC_INFO<< " " <<QThread::currentThread();
+        QObject::connect( sslSocket, &QSslSocket::encrypted, [ this, sslSocket ]()
+        {
+            qDebug()<<"encrypted: !";
+        } );
 
-    if(!m_socket->setSocketDescriptor(m_socketDescriptor)){
-        qWarning()<<"failed to claim socket: " << m_socketDescriptor;
-        this->deleteLater(); //delete and ignore the socket if it failed to claim the socketDescriptor !
-        return;
+        QObject::connect( sslSocket, QOverload<const QList<QSslError> &>::of(&QSslSocket::sslErrors), [ this, sslSocket ](const QList<QSslError> &errors)
+        {
+            qDebug()<<"ssl errors !";
+        } );
+
+        m_socket=sslSocket;
+
+    }else{
+        m_socket= new QTcpSocket();
     }
-
     connect(m_socket,&QTcpSocket::readyRead,this,&SSocketHandler::onReadyRead);
     connect(&m_closeTimer,&QTimer::timeout,this,&SSocketHandler::onTimeout);
     connect(this,&SSocketHandler::requestFinished,this,&SSocketHandler::onRequestFinished);
     connect(m_socket,&QTcpSocket::disconnected,this,&SSocketHandler::onDisconnected);
     connect(m_socket,&QTcpSocket::bytesWritten,this,&SSocketHandler::onBytesWritten);
+
+
+    if(!m_socket->setSocketDescriptor(m_socketDescriptor)){
+
+        qWarning()<<"failed to claim socket: " << m_socketDescriptor;
+        //delete and ignore the socket if it failed to claim the socketDescriptor !
+        emit finished();
+        return;
+    }
+
+    if(!m_sslConfig.isNull()){
+        QSslSocket *sslSocket = (QSslSocket*)m_socket;
+        sslSocket->startServerEncryption();
+    }
 
     m_closeTimer.start();
     QEventLoop eventLoop;
@@ -47,25 +75,29 @@ void SSocketHandler::run()
 
 void SSocketHandler::onReadyRead()
 {
+    qDebug()<<"Ready read !";
     m_closeTimer.stop();
-    //qDebug()<<Q_FUNC_INFO<< " " <<QThread::currentThread();
     m_buffer.append(m_socket->readAll());
     handleBuffer();
     m_closeTimer.start();
 }
 void SSocketHandler::onTimeout()
 {
-    qDebug()<<"timeout";
+    //qDebug()<<"timeout";
     disconnect(m_socket,&QTcpSocket::readyRead,this,&SSocketHandler::onReadyRead);
     emit finished();
     //m_socket->deleteLater();
 }
+
 /*
 this method is called everytime an http request is fully received
 you must handle the request content and write the reply here
 */
 void SSocketHandler::onRequestFinished()
 {
+    qDebug()<<"Request finished !";
+    qDebug()<<"body: " << m_currentRequest.m_body;
+
     m_bytesToWrite=-1;
 
     SHttpRequest request;
@@ -73,14 +105,11 @@ void SSocketHandler::onRequestFinished()
     request.m_body=m_currentRequest.m_body;
     request.m_headers=m_currentRequest.m_headersPairs;
     request.m_operation=Http::GetOperation;
-    Router router;
-    SHttpResponse res = router.route(&request);
+    SHttpResponse res = m_router->route(&request);
 
-
-
-    //must use the router here !
     QByteArray m_body=QByteArray();
-    QString replyTextFormat(
+    QByteArray replyData=toRawData(res.data());
+    QString replyTextFormat=QString(
            "HTTP/1.1 %1 OK\r\n"
            "Content-Type: %2\r\n"
            "Content-Length: %3\r\n"
@@ -88,21 +117,19 @@ void SSocketHandler::onRequestFinished()
            "Access-Control-Allow-Headers: Content-Type,X-Requested-With\r\n"
            "\r\n"
            "%4"
-       );
-    QByteArray replyData=rawData(res.data());
-    replyTextFormat=replyTextFormat.arg(res.statusCode())
-            .arg(QString(mapContentType(res.data().type())))
-            .arg(replyData.size()).arg(QString(replyData));
-   m_socket->write(replyTextFormat.toUtf8());
-   m_currentRequest=SHttpRequestManifest();
+       ).arg(res.statusCode())
+        .arg(QString(mapContentType(res.data().type())))
+        .arg(replyData.size()).arg(QString(replyData));
 
+   m_socket->write(replyTextFormat.toUtf8());
+
+   //now we wait for the bytes to be written, new requests will only be accepted when bytes are written
 }
 
 void SSocketHandler::onDisconnected()
 {
-    qInfo()<<QString("socket %1 disconnected").arg(m_socket->socketDescriptor());
+    //qInfo()<<QString("socket %1 disconnected").arg(m_socket->socketDescriptor());
     emit finished();
-    //this->deleteLater();
 }
 
 void SSocketHandler::onBytesWritten(qint64 bytes)
@@ -121,7 +148,8 @@ void SSocketHandler::onBytesWritten(qint64 bytes)
 
         m_bytesToWrite=-1;
         m_bytesWritten=0;
-
+        //make current request invalid
+        m_currentRequest=SHttpRequestManifest();
         //start accepting another request?
     }
 }
@@ -130,7 +158,7 @@ void SSocketHandler::onBytesWritten(qint64 bytes)
 void SSocketHandler::handleBuffer()
 {
     if(m_currentRequest.m_invalid){
-        qInfo()<<"invalid request !";
+        //qInfo()<<"invalid request !";
         emit finished();
         return;
     }
@@ -226,10 +254,10 @@ void SSocketHandler::handleBuffer()
         m_closeTimer.stop();
         emit requestFinished();
     }
-    qDebug()<<"Body: "<<m_currentRequest.m_body;
+    //qDebug()<<"Body: "<<m_currentRequest.m_body;
 }
 
-QByteArray SSocketHandler::mapContentType(const QVariant::Type type)
+QByteArray SSocketHandler::mapContentType(const int &type)
 {
     //Q_D(Request);
 
@@ -251,7 +279,7 @@ QByteArray SSocketHandler::mapContentType(const QVariant::Type type)
     return contentType;
 }
 
-QByteArray SSocketHandler::rawData(const QVariant &data)
+QByteArray SSocketHandler::toRawData(const QVariant &data)
 {
     QMetaType::Type type=static_cast<QMetaType::Type>(data.type());
 
@@ -350,7 +378,7 @@ QByteArray SSocketHandler::rawData(const QVariant &data)
 #endif
 
 
-    qDebug()<<"Request::rawData : unsupported QVariant type";
+    qDebug()<<"SSocketHandler::toRawData : unsupported QVariant type";
 
     return QByteArray();
 }

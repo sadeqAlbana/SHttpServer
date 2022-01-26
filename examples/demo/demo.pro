@@ -10,6 +10,9 @@ CONFIG -= app_bundle
 SOURCES += \
         main.cpp
 
+RESOURCES += \
+    $$PWD/key/key.qrc
+
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin

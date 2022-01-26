@@ -12,10 +12,11 @@ class SHttpRequest
 
 public:
     explicit SHttpRequest();
-    Http::Operation operation() const;
 
     QString remoteAddress() ;
     QString operationString();
+    Http::Operation operation() const;
+
     //QJsonObject data(){return _object;}
 
     //QString urlParameter(QString key);
@@ -23,17 +24,26 @@ public:
     //QJsonValue json();
 
     //QJsonDocument jsonDocument(){return _document;}
+
     bool isJson();
 
     QUrl url() const;
+
+    QString urlParameter(QString key);
+    QJsonValue json(QString key);
+    QJsonValue json();
+
+
     QByteArray header(QByteArray key);
     QByteArray mapContentType(const QVariant::Type type);
-    QByteArray rawData(const QVariant &data);
+    //
+    QByteArray toRawData(const QVariant &data);
 
     HttpHeaderList headers() const;
 
     Http::Operation m_operation;
     QByteArray m_body;
+    QVariant m_mappedData;
     QUrl m_url;
     HttpHeaderList m_headers;
 

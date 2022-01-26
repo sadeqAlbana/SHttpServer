@@ -9,7 +9,6 @@
 #include <QThread>
 Router::Router()
 {
-
     Route::get("/test",[](SHttpRequest *request) ->SHttpResponse{
         return SHttpResponse(QJsonObject{{"tests",1}});
     });

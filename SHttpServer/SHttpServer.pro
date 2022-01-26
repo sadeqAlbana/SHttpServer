@@ -15,8 +15,8 @@ SOURCES += \
     router.cpp \
     shttprequest.cpp \
     shttpresponse.cpp \
+    shttpserver.cpp \
     ssockethandler.cpp \
-    stcpserver.cpp \
     testcontroller.cpp
 
 HEADERS += \
@@ -26,8 +26,8 @@ HEADERS += \
     router.h \
     shttprequest.h \
     shttpresponse.h \
+    shttpserver.h \
     ssockethandler.h \
-    stcpserver.h \
     testcontroller.h
 
 # Default rules for deployment.

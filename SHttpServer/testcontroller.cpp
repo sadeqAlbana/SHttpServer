@@ -3,7 +3,7 @@
 #include <QThread>
 TestController::TestController(QObject *parent) : Controller(parent)
 {
-    qDebug()<<Q_FUNC_INFO << " " <<  QThread::currentThread();
+    //qDebug()<<Q_FUNC_INFO << " " <<  QThread::currentThread();
 
 }
 
@@ -16,5 +16,5 @@ SHttpResponse TestController::test(SHttpRequest *request)
 
 TestController::~TestController()
 {
-    qDebug()<<Q_FUNC_INFO << " " <<  QThread::currentThread();
+    //qDebug()<<Q_FUNC_INFO << " " <<  QThread::currentThread();
 }

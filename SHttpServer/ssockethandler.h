@@ -6,6 +6,9 @@
 #include <QPointer>
 #include <QTimer>
 #include "HttpCommon.h"
+#include <QSslSocket>
+#include <QSslConfiguration>
+class Router;
 //https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Connection
 
 /*
@@ -14,6 +17,8 @@ socket won't close unless the timer times out, Connection header is set to close
 
 
 */
+
+
 
 struct SHttpRequestManifest{
     bool m_finished=false;
@@ -32,7 +37,8 @@ class SSocketHandler : public QObject
 {
     Q_OBJECT
 public:
-    explicit SSocketHandler(const qintptr &socketDescriptor, QObject *parent = nullptr);
+    explicit SSocketHandler(const qintptr &socketDescriptor,
+                            const QSslConfiguration &sslConfig=QSslConfiguration(), QObject *parent = nullptr);
     virtual ~SSocketHandler();
     void run();
 signals:
@@ -47,8 +53,8 @@ private:
     void onRequestFinished(); //temp function for testing, use direct calls later
     void onDisconnected();
     void onBytesWritten(qint64 bytes);
-    QByteArray mapContentType(const QVariant::Type type);
-    QByteArray rawData(const QVariant &data);
+    QByteArray mapContentType(const int &type);
+    QByteArray toRawData(const QVariant &data);
 
 
 
@@ -61,10 +67,8 @@ private:
     SHttpRequestManifest m_currentRequest;
     qint64 m_bytesToWrite=-1;
     qint64 m_bytesWritten=0;
-
-
-
-
+    Router *m_router;
+    QSslConfiguration m_sslConfig;
 };
 
 #endif // SSOCKETHANDLER_H

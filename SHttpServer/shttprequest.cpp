@@ -10,6 +10,8 @@ Http::Operation SHttpRequest::operation() const
     return m_operation;
 }
 
+
+
 QString SHttpRequest::operationString()
 {
     Http::Operation operation = this->operation();
@@ -30,6 +32,21 @@ QString SHttpRequest::operationString()
 QUrl SHttpRequest::url() const
 {
     return m_url;
+}
+
+QString SHttpRequest::urlParameter(QString key)
+{
+    return QString();
+}
+
+QJsonValue SHttpRequest::json(QString key)
+{
+    return m_mappedData.toJsonObject()[key];
+}
+
+QJsonValue SHttpRequest::json()
+{
+    return m_mappedData.toJsonValue();
 }
 
 QByteArray SHttpRequest::header(QByteArray key)

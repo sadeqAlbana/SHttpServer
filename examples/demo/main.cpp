@@ -1,10 +1,11 @@
 #include <QCoreApplication>
 #include <QHostAddress>
-#include <stcpserver.h>
+#include <shttpserver.h>
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
-    STcpServer server;
+    SHttpServer server;
+    qDebug()<<server.setSSlConfiguration(":/server.crt", ":/server.key");
     if(!server.listen(QHostAddress::Any,8080)){
         exit(1);
     }
