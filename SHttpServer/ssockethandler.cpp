@@ -20,7 +20,7 @@ SSocketHandler::SSocketHandler(const qintptr &socketDescriptor, const Router &ro
     m_requestCallbacks(rCallbacks)
 {
     //be warned that the constructor is created on the main thread !
-    m_closeTimer.setInterval(30*1000);
+    m_closeTimer.setInterval(5*1000);
     m_closeTimer.setSingleShot(true);
 }
 
@@ -75,7 +75,7 @@ void SSocketHandler::run()
     //call routines
     bool passedRoutines=true;
     for(const ConnectionRoutineCallBack &routine : m_connectionCallbacks){
-        passedRoutines=routine();
+        passedRoutines=routine(this);
         if(!passedRoutines){
             //return some sort of error, maybe catch an exception !
             break;
@@ -83,8 +83,9 @@ void SSocketHandler::run()
     }
 
     m_closeTimer.start();
-    QEventLoop eventLoop;
-    eventLoop.exec();
+    //no need to call an event loop since the default implementation of QThread::run calls QThread::exec()
+//    QEventLoop eventLoop;
+//    eventLoop.exec();
 }
 
 void SSocketHandler::onReadyRead()
@@ -98,6 +99,7 @@ void SSocketHandler::onReadyRead()
 void SSocketHandler::onTimeout()
 {
     //qDebug()<<"timeout";
+    m_socket->disconnectFromHost();
     disconnect(m_socket,&QTcpSocket::readyRead,this,&SSocketHandler::onReadyRead);
     emit finished();
     //m_socket->deleteLater();
@@ -154,7 +156,7 @@ void SSocketHandler::onRequestFinished()
 
 void SSocketHandler::onDisconnected()
 {
-    //qInfo()<<QString("socket %1 disconnected").arg(m_socket->socketDescriptor());
+    qInfo()<<QString("socket %1 disconnected").arg(m_socket->socketDescriptor());
     emit finished();
 }
 
@@ -176,7 +178,8 @@ void SSocketHandler::onBytesWritten(qint64 bytes)
         m_bytesWritten=0;
         //make current request invalid
         m_currentRequest=SHttpRequestManifest();
-        m_buffer=QByteArray(); //removing this line causes a problem in multiple requests !
+        //qDebug()<<"m_buffer: " << m_buffer;
+        //m_buffer=QByteArray(); //removing this line causes a problem in multiple requests !
         //start accepting another request?
     }
 }
@@ -274,6 +277,7 @@ void SSocketHandler::handleBuffer()
         int contentLength=m_currentRequest.m_headersPairs["Content-Length"].toInt();
         if(m_buffer.size()>=contentLength){
             m_currentRequest.m_body=m_buffer.mid(0,contentLength);
+            m_buffer.clear();
             m_currentRequest.m_finished=true;
             m_closeTimer.stop();
             emit requestFinished();

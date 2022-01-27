@@ -1,4 +1,4 @@
-#include "HttpCommon.h"
+#include "httpcommon.h"
 Http::Operation Http::methodtoEnum(const QString &op)
 {
         if(op=="GET")
@@ -15,5 +15,4 @@ Http::Operation Http::methodtoEnum(const QString &op)
             return OptionsOperation;
 
         return GetOperation; //change this later !!!!!!
-
 }

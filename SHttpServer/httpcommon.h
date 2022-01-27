@@ -1,9 +1,9 @@
 #ifndef HTTPCOMMON_H
 #define HTTPCOMMON_H
 #include <QObject>
-
+class SSocketHandler;
 using HttpHeaderList = QHash<QByteArray,QByteArray>;
-using ConnectionRoutineCallBack = std::function<bool ()>;
+using ConnectionRoutineCallBack = std::function<bool (SSocketHandler *)>;
 using ConnectionRoutineCallBackList = QList<ConnectionRoutineCallBack>;
 class SHttpRequest;
 using RequestRoutineCallBack = std::function<bool (SHttpRequest *)>;
