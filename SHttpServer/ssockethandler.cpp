@@ -20,7 +20,7 @@ SSocketHandler::SSocketHandler(const qintptr &socketDescriptor, const Router &ro
     m_requestCallbacks(rCallbacks)
 {
     //be warned that the constructor is created on the main thread !
-    m_closeTimer.setInterval(5*1000);
+    m_closeTimer.setInterval(30*1000);
     m_closeTimer.setSingleShot(true);
 }
 
@@ -156,7 +156,7 @@ void SSocketHandler::onRequestFinished()
 
 void SSocketHandler::onDisconnected()
 {
-    qInfo()<<QString("socket %1 disconnected").arg(m_socket->socketDescriptor());
+    //qInfo()<<QString("socket %1 disconnected").arg(m_socket->socketDescriptor());
     emit finished();
 }
 
@@ -189,7 +189,7 @@ void SSocketHandler::handleBuffer()
 {
     //qDebug()<<"Handle buffer called !";
     if(m_currentRequest.m_invalid){
-        qDebug()<<"invalid request !";
+        //qDebug()<<"invalid request !";
         emit finished();
         return;
     }
@@ -411,7 +411,7 @@ QByteArray SSocketHandler::toRawData(const QVariant &data)
 #endif
 
 
-    qDebug()<<"SSocketHandler::toRawData : unsupported QVariant type";
+    qInfo()<<"SSocketHandler::toRawData : unsupported QVariant type";
 
     return QByteArray();
 }

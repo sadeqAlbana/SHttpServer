@@ -72,7 +72,7 @@ void SHttpServer::installRequestRoutine(RequestRoutineCallBack routine)
 
 void SHttpServer::incomingConnection(qintptr socketDescriptor)
 {
-    qInfo()<< "New Connection !";
+    //qInfo()<< "New Connection !";
     SSocketHandler *handler=new SSocketHandler(socketDescriptor,*this,m_connectionCallbacks,m_requestCallbacks,m_sslConfig);
     QThread *thread = new QThread();
     handler->moveToThread(thread);
@@ -80,6 +80,6 @@ void SHttpServer::incomingConnection(qintptr socketDescriptor)
     connect(handler,&SSocketHandler::finished,thread,&QThread::quit,Qt::QueuedConnection);
     connect(thread,&QThread::finished,thread,&QObject::deleteLater);
     connect(thread,&QThread::finished,handler,&QObject::deleteLater);
-    connect(thread,&QThread::finished,[](){qDebug()<<"thread finished";});
+    //connect(thread,&QThread::finished,[](){qDebug()<<"thread finished";});
     thread->start();
 }
