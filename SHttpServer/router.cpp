@@ -103,6 +103,7 @@ SHttpResponse Router::route(SHttpRequest *request)
             qDebug()<<"reached here !!!!";
         }
         catch(std::exception &exception){
+            qDebug()<<"exception: " << exception.what();
 
             return SHttpResponse(QJsonObject{{"error","Internal Server Error"},
                                        {"message",exception.what()}},Http::InternalServerError);
