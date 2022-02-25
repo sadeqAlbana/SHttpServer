@@ -27,7 +27,7 @@ SSocketHandler::SSocketHandler(const qintptr &socketDescriptor, const Router &ro
     m_requestCallbacks(rCallbacks)
 {
     //be warned that the constructor is created on the main thread !
-    m_closeTimer.setInterval(30*1000);
+    m_closeTimer.setInterval(10*3000);
     m_closeTimer.setSingleShot(true);
 }
 
@@ -41,6 +41,7 @@ void SSocketHandler::run()
 {
     if(!m_sslConfig.isNull()){
         QSslSocket *sslSocket= new QSslSocket();
+
         sslSocket->setSslConfiguration(m_sslConfig);
         //sslSocket->ignoreSslErrors();
 
@@ -105,8 +106,9 @@ void SSocketHandler::onReadyRead()
 }
 void SSocketHandler::onTimeout()
 {
-    //qDebug()<<"timeout";
-    m_socket->disconnectFromHost();
+    qDebug()<<"timeout";
+    m_socket->close();
+    //qDebug()<<"wait for   disconnect: "<<m_socket->waitForDisconnected();
     disconnect(m_socket,&QTcpSocket::readyRead,this,&SSocketHandler::onReadyRead);
     emit finished();
     //m_socket->deleteLater();
@@ -118,7 +120,7 @@ you must handle the request content and write the reply here
 */
 void SSocketHandler::onRequestFinished()
 {
-    //qInfo()<<"Request finished !";
+    qInfo()<<"Request receiving finished, starting processing !";
     //qInfo()<<"body: " << m_currentRequest.m_body;
 
     m_bytesToWrite=-1;
@@ -149,6 +151,8 @@ void SSocketHandler::onRequestFinished()
            "HTTP/1.1 %1 OK\r\n"
            "Content-Type: %2\r\n"
            "Content-Length: %3\r\n"
+           "Connection: keep-alive\r\n"
+           "Keep-Alive: timeout=30\r\n"
            "Access-Control-Allow-Origin: *\r\n"
            "Access-Control-Allow-Headers: Content-Type,X-Requested-With\r\n"
            "\r\n"
@@ -157,20 +161,26 @@ void SSocketHandler::onRequestFinished()
         .arg(QString(mapContentType(res.data().type())))
         .arg(replyData.size()).arg(QString(replyData));
 
+    m_bytesToWrite=replyTextFormat.size();
    m_socket->write(replyTextFormat.toUtf8());
    //now we wait for the bytes to be written, new requests will only be accepted when bytes are written
 }
 
 void SSocketHandler::onDisconnected()
 {
-    //qInfo()<<QString("socket %1 disconnected").arg(m_socket->socketDescriptor());
+    qDebug()<<"disconnected called";
+    qDebug()<<QString("socket %1 disconnected").arg(m_socket->socketDescriptor());
     emit finished();
 }
 
 void SSocketHandler::onBytesWritten(qint64 bytes)
 {
     m_bytesWritten+=bytes;
-    if(m_bytesWritten>=m_bytesToWrite){ //>=
+    qDebug()<<"bytesWritten: " << m_bytesWritten;
+    qDebug()<<"bytesToWrite: " << m_bytesToWrite;
+    qDebug()<<"bytesToWrite(real): " << m_socket->bytesToWrite();
+
+    if(m_socket->bytesToWrite()<=0){ //>=
         // if(response if fully written, then check the Connection header to determine wether to close the connection or not
 
         if(m_currentRequest.m_headersPairs.contains("Connection")){
@@ -188,6 +198,7 @@ void SSocketHandler::onBytesWritten(qint64 bytes)
         //qDebug()<<"m_buffer: " << m_buffer;
         //m_buffer=QByteArray(); //removing this line causes a problem in multiple requests !
         //start accepting another request?
+        //qInfo()<<"finished request";
     }
 }
 
