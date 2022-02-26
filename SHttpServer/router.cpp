@@ -26,7 +26,7 @@ Router::Router()
 
 Router::~Router()
 {
-
+    //qDebug()<<Q_FUNC_INFO;
 }
 
 SHttpResponse Router::route(SHttpRequest *request)
@@ -60,9 +60,9 @@ SHttpResponse Router::route(SHttpRequest *request)
         CallbackInfo cb= callBacks->value(rawUrl);
         if(!cb.middlewares.isEmpty())
         {
-            for (AbstractMiddleware *middleware : cb.middlewares) {
+            for (const MiddleWare &middleWare : cb.middlewares) {
 
-                if(!middleware->handle(request))
+                if(!middleWare(request))
                 {
                     try {
                         return SHttpResponse(QString("Unauthorized access"),Http::Unauthorized);
@@ -100,7 +100,7 @@ SHttpResponse Router::route(SHttpRequest *request)
 
             }
             //Response res = metaObject ? (metaObject->newInstance(->*cb.ptr)(request) : cb.callback(request);
-            qDebug()<<"reached here !!!!";
+            //qDebug()<<"reached here !!!!";
         }
         catch(std::exception &exception){
             qDebug()<<"exception: " << exception.what();

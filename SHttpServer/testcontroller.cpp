@@ -16,8 +16,8 @@ TestController::TestController(QObject *parent) : Controller(parent)
 
 SHttpResponse TestController::test(SHttpRequest *request)
 {
-    qDebug()<<"test route invoked !";
-    qDebug()<<QThread::currentThread();
+    //qDebug()<<"test route invoked !";
+    //qDebug()<<QThread::currentThread();
     return SHttpResponse(QJsonObject{{"method",Q_FUNC_INFO}});
 }
 

@@ -13,7 +13,7 @@ class SHttpResponse
 {
 public:
     SHttpResponse(QVariant data, Http::StatusCode statusCode=Http::Ok, HttpHeaderList headers=HttpHeaderList());
-
+    ~SHttpResponse();
     Http::StatusCode statusCode() const;
     QVariant data() const;
     HttpHeaderList headers() const;

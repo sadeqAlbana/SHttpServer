@@ -33,6 +33,7 @@ SSocketHandler::SSocketHandler(const qintptr &socketDescriptor, const Router &ro
 
 SSocketHandler::~SSocketHandler()
 {
+    //qDebug()<<Q_FUNC_INFO;
     delete m_router;
     m_socket->deleteLater();
 }
@@ -120,10 +121,10 @@ you must handle the request content and write the reply here
 */
 void SSocketHandler::onRequestFinished()
 {
-    qInfo()<<"Request receiving finished, starting processing !";
+    //qInfo()<<"Request receiving finished, starting processing !";
     //qInfo()<<"body: " << m_currentRequest.m_body;
 
-    m_bytesToWrite=-1;
+    //m_bytesToWrite=-1;
 
     SHttpRequest request;
     request.m_url=m_currentRequest.m_path;
@@ -161,24 +162,25 @@ void SSocketHandler::onRequestFinished()
         .arg(QString(mapContentType(res.data().type())))
         .arg(replyData.size()).arg(QString(replyData));
 
-    m_bytesToWrite=replyTextFormat.size();
+//    m_bytesToWrite=replyTextFormat.toUtf8().size();
    m_socket->write(replyTextFormat.toUtf8());
    //now we wait for the bytes to be written, new requests will only be accepted when bytes are written
 }
 
 void SSocketHandler::onDisconnected()
 {
-    qDebug()<<"disconnected called";
-    qDebug()<<QString("socket %1 disconnected").arg(m_socket->socketDescriptor());
+    //qDebug()<<"disconnected called";
+    //qDebug()<<QString("socket %1 disconnected").arg(m_socket->socketDescriptor());
     emit finished();
 }
 
 void SSocketHandler::onBytesWritten(qint64 bytes)
 {
-    m_bytesWritten+=bytes;
-    qDebug()<<"bytesWritten: " << m_bytesWritten;
-    qDebug()<<"bytesToWrite: " << m_bytesToWrite;
-    qDebug()<<"bytesToWrite(real): " << m_socket->bytesToWrite();
+//    m_bytesWritten+=bytes;
+//    qDebug()<<"bytes: " << bytes;
+//    qDebug()<<"bytesWritten: " << m_bytesWritten;
+//    qDebug()<<"bytesToWrite: " << m_bytesToWrite;
+    //qDebug()<<"bytesToWrite(real): " << m_socket->bytesToWrite();
 
     if(m_socket->bytesToWrite()<=0){ //>=
         // if(response if fully written, then check the Connection header to determine wether to close the connection or not
@@ -191,8 +193,8 @@ void SSocketHandler::onBytesWritten(qint64 bytes)
             }
         }
 
-        m_bytesToWrite=-1;
-        m_bytesWritten=0;
+        //m_bytesToWrite=-1;
+        //m_bytesWritten=0;
         //make current request invalid
         m_currentRequest=SHttpRequestManifest();
         //qDebug()<<"m_buffer: " << m_buffer;

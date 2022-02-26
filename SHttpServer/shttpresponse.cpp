@@ -6,12 +6,17 @@
  */
 
 #include "shttpresponse.h"
-
+#include <QDebug>
 SHttpResponse::SHttpResponse(QVariant data, Http::StatusCode statusCode, HttpHeaderList headers) : m_data(data),
     m_statusCode(statusCode),
     m_headers(headers)
 {
 
+}
+
+SHttpResponse::~SHttpResponse()
+{
+    //qDebug()<<Q_FUNC_INFO;
 }
 
 Http::StatusCode SHttpResponse::statusCode() const

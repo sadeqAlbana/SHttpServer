@@ -15,5 +15,5 @@ Controller::Controller(QObject *parent) : QObject(parent)
 
 Controller::~Controller()
 {
-    //qDebug()<<Q_FUNC_INFO << " " <<  QThread::currentThread();
+    //qDebug()<<Q_FUNC_INFO;
 }

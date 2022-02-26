@@ -19,6 +19,7 @@ class SHttpRequest
 
 public:
     explicit SHttpRequest();
+    ~SHttpRequest();
 
     QString remoteAddress() ;
     QString operationString();

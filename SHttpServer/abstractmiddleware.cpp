@@ -6,8 +6,13 @@
  */
 
 #include "abstractmiddleware.h"
+#include <QDebug>
+//AbstractMiddleware::AbstractMiddleware()
+//{
 
-AbstractMiddleware::AbstractMiddleware()
-{
+//}
 
-}
+//AbstractMiddleware::~AbstractMiddleware()
+//{
+//    //qDebug()<<Q_FUNC_INFO;
+//}

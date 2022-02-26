@@ -75,8 +75,8 @@ private:
     QByteArray m_buffer;
     QTimer m_closeTimer;
     SHttpRequestManifest m_currentRequest;
-    qint64 m_bytesToWrite=-1;
-    qint64 m_bytesWritten=0;
+    //qint64 m_bytesToWrite=-1;
+    //qint64 m_bytesWritten=0;
     Router *m_router;
     QSslConfiguration m_sslConfig;
     ConnectionRoutineCallBackList m_connectionCallbacks;

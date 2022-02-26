@@ -10,15 +10,16 @@
 
 #include <QList>
 class SHttpRequest;
-class AbstractMiddleware
-{
-public:
-    AbstractMiddleware();
-    //virtual ~AbstractMiddleware();
+using MiddleWare = std::function<bool (SHttpRequest *)>;
+//class AbstractMiddleware
+//{
+//public:
+//    AbstractMiddleware();
+//    virtual ~AbstractMiddleware();
 
-    virtual bool handle(SHttpRequest *request)=0;
-};
+//    virtual bool handle(SHttpRequest *request)=0;
+//};
 
-typedef QList<AbstractMiddleware *> MiddlewareList;
+typedef QList<MiddleWare> MiddlewareList;
 
 #endif // ABSTRACTMIDDLEWARE_H

@@ -19,6 +19,11 @@ SHttpServer::SHttpServer(QObject *parent) : QTcpServer(parent)
     QThread::currentThread()->setObjectName("main thread");
 }
 
+SHttpServer::~SHttpServer()
+{
+    //qDebug()<<Q_FUNC_INFO;
+}
+
 bool SHttpServer::setSSlConfiguration(const QString &crtFilePath, const QString &keyFilePath, const QList<QPair<QString, QSsl::EncodingFormat> > &caFileList, const QSslSocket::PeerVerifyMode &peerVerifyMode)
 {
     QFile fileForCrt( crtFilePath );

@@ -12,6 +12,11 @@ SHttpRequest::SHttpRequest()
 
 }
 
+SHttpRequest::~SHttpRequest()
+{
+    //qDebug()<<Q_FUNC_INFO;
+}
+
 QString SHttpRequest::remoteAddress()
 {
     return m_remoteAddress;

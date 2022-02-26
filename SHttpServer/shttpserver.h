@@ -20,6 +20,7 @@ class SHttpServer : public QTcpServer, public Router
     Q_OBJECT
 public:
     explicit SHttpServer(QObject *parent = nullptr);
+    ~SHttpServer();
     bool setSSlConfiguration(const QString &crtFilePath,
                              const QString &keyFilePath,
                              const QList< QPair< QString, QSsl::EncodingFormat > > &caFileList = {},
