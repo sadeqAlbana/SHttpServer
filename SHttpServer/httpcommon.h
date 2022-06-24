@@ -8,6 +8,7 @@
 #ifndef HTTPCOMMON_H
 #define HTTPCOMMON_H
 #include <QObject>
+#include <QJsonValue>
 class SSocketHandler;
 using HttpHeaderList = QHash<QByteArray,QByteArray>;
 using ConnectionRoutineCallBack = std::function<bool (SSocketHandler *)>;
@@ -15,6 +16,29 @@ using ConnectionRoutineCallBackList = QList<ConnectionRoutineCallBack>;
 class SHttpRequest;
 using RequestRoutineCallBack = std::function<bool (SHttpRequest *)>;
 using RequestRoutineCallBackList = QList<RequestRoutineCallBack>;
+
+struct RequestParam{
+    QString key;
+    QJsonValue::Type type;
+};
+typedef QList<RequestParam> ParamList;
+QPair<bool,QString> validateParams(const ParamList &requiredParams, const QJsonObject &requestObject);
+
+#define require(x) \
+     if(!hasPermission(x,request)){ \
+     return SHttpResponse(QString("you Don't have permission to view this page"),Http::Unauthorized);}
+
+#define requireParams(x)\
+    QString missedParam = missingParam(x,request->json().toObject().keys()); \
+    if(!missedParam.isNull())\
+    return SHttpResponse(QJsonObject{{"status",-100},{"message",QString("parameter '%1' is missing").arg(missedParam)}},Http::BadRequest);
+
+#define requireParamsNew(...)\
+    ParamList __request_param_list{__VA_ARGS__}; \
+    QPair<bool,QString> paramsCompResult = validateParams(__request_param_list,request->json().toObject()); \
+    if(paramsCompResult.first==false)\
+        return SHttpResponse(QJsonObject{{"status",-100},{"message",paramsCompResult.second}},Http::BadRequest);
+
 namespace Http {
 
     Q_NAMESPACE;
@@ -122,6 +146,8 @@ namespace Http {
 
 
     Operation methodtoEnum(const QString &op);
+
+
 
 }
 #endif // HTTPCOMMON_H

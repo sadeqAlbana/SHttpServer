@@ -29,7 +29,6 @@ HEADERS += \
     shttpresponse.h \
     shttpserver.h \
     ssockethandler.h \
-    acl.h \
     testcontroller.h
 
 # Default rules for deployment.
