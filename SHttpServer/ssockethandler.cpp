@@ -148,6 +148,7 @@ void SSocketHandler::onRequestFinished()
     SHttpResponse res = m_router->route(&request);
     QByteArray m_body=QByteArray();
     QByteArray replyData=toRawData(res.data());
+    QString contentType=res.headers().contains("content-type")? res.headers().value("Content-Type") : mapContentType(res.data().type());
     QString replyTextFormat=QString(
            "HTTP/1.1 %1 OK\r\n"
            "Content-Type: %2\r\n"
@@ -157,13 +158,14 @@ void SSocketHandler::onRequestFinished()
            "Access-Control-Allow-Origin: *\r\n"
            "Access-Control-Allow-Headers: Content-Type,X-Requested-With\r\n"
            "\r\n"
-           "%4"
        ).arg(res.statusCode())
-        .arg(QString(mapContentType(res.data().type())))
-        .arg(replyData.size()).arg(QString(replyData));
+        .arg(contentType)
+        .arg(replyData.size());
+    QByteArray reply=replyTextFormat.toUtf8();
+    reply.append(replyData);
 
 //    m_bytesToWrite=replyTextFormat.toUtf8().size();
-   m_socket->write(replyTextFormat.toUtf8());
+   m_socket->write(reply);
    //now we wait for the bytes to be written, new requests will only be accepted when bytes are written
 }
 
@@ -326,6 +328,7 @@ QByteArray SSocketHandler::mapContentType(const int &type)
     case QMetaType::QJsonDocument: contentType = "application/json;charset=UTF-8"; break;
     case QMetaType::QImage       : contentType = "image/png";        break;
     case QMetaType::QString      : contentType = "text/plain";       break;
+
 
     default                      :                                   break;
     }
