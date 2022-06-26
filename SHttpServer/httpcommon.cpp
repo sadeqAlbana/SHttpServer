@@ -50,3 +50,6 @@ QPair<bool,QString> validateParams(const ParamList &requiredParams, const QJsonO
 
     return QPair<bool,QString>(true,QString());
 }
+
+
+

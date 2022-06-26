@@ -22,6 +22,7 @@ struct RequestParam{
     QJsonValue::Type type;
 };
 typedef QList<RequestParam> ParamList;
+QString missingParam(QStringList requiredParams, QStringList requestParams);
 QPair<bool,QString> validateParams(const ParamList &requiredParams, const QJsonObject &requestObject);
 
 #define require(x) \
