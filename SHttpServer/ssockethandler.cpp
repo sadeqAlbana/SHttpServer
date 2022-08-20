@@ -178,11 +178,6 @@ void SSocketHandler::onDisconnected()
 
 void SSocketHandler::onBytesWritten(qint64 bytes)
 {
-//    m_bytesWritten+=bytes;
-//    qDebug()<<"bytes: " << bytes;
-//    qDebug()<<"bytesWritten: " << m_bytesWritten;
-//    qDebug()<<"bytesToWrite: " << m_bytesToWrite;
-    //qDebug()<<"bytesToWrite(real): " << m_socket->bytesToWrite();
 
     if(m_socket->bytesToWrite()<=0){ //>=
         // if(response if fully written, then check the Connection header to determine wether to close the connection or not
@@ -192,12 +187,12 @@ void SSocketHandler::onBytesWritten(qint64 bytes)
             if(connection==QStringLiteral("close")){
                 m_socket->close(); //close calls disconnectFromHost() internally !
                 emit finished();
+
+                //db commit will be called from a routine around here !
             }
         }
 
-        //m_bytesToWrite=-1;
-        //m_bytesWritten=0;
-        //make current request invalid
+
         m_currentRequest=SHttpRequestManifest();
         //qDebug()<<"m_buffer: " << m_buffer;
         //m_buffer=QByteArray(); //removing this line causes a problem in multiple requests !

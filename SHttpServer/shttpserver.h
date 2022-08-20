@@ -26,9 +26,14 @@ public:
                              const QList< QPair< QString, QSsl::EncodingFormat > > &caFileList = {},
                              const QSslSocket::PeerVerifyMode &peerVerifyMode=QSslSocket::VerifyNone);
 
+    /*parameter callback routine will be called after each new connection*/
     void installConnectionRoutine(ConnectionRoutineCallBack routine);
+
+    /*parameter callback routine will be called after each new http request including the ones using the same connection*/
     void installRequestRoutine(RequestRoutineCallBack routine);
 
+    //void installRequestFinishRoutine(RequestFinishRoutineCallBack routine); //to be implemented
+    //void installConnectionEndRoutine(ConnectionEndRoutineCallBack routine); //to be implemented
 
 signals:
 
