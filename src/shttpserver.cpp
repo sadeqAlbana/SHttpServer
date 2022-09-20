@@ -11,9 +11,9 @@
 #include <QThread>
 #include <QThreadPool>
 #include "ssockethandler.h"
-#include <QtConcurrent>
 #include <QSslKey>
 #include <QSslConfiguration>
+#include <QFile>
 SHttpServer::SHttpServer(QObject *parent) : QTcpServer(parent)
 {
     QThread::currentThread()->setObjectName("main thread");

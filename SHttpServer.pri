@@ -1,23 +1,23 @@
-INCLUDEPATH += $$PWD/SHttpServer
+INCLUDEPATH += $$PWD/src
 
 SOURCES += \
-    $$PWD/SHttpServer/abstractmiddleware.cpp \
-    $$PWD/SHttpServer/controller.cpp \
-    $$PWD/SHttpServer/httpcommon.cpp \
-    $$PWD/SHttpServer/router.cpp \
-    $$PWD/SHttpServer/shttprequest.cpp \
-    $$PWD/SHttpServer/shttpresponse.cpp \
-    $$PWD/SHttpServer/shttpserver.cpp \
-    $$PWD/SHttpServer/ssockethandler.cpp \
-    $$PWD/SHttpServer/testcontroller.cpp
+    $$PWD/src/abstractmiddleware.cpp \
+    $$PWD/src/controller.cpp \
+    $$PWD/src/httpcommon.cpp \
+    $$PWD/src/router.cpp \
+    $$PWD/src/shttprequest.cpp \
+    $$PWD/src/shttpresponse.cpp \
+    $$PWD/src/shttpserver.cpp \
+    $$PWD/src/ssockethandler.cpp \
+    $$PWD/src/testcontroller.cpp
 
 HEADERS += \
-    $$PWD/SHttpServer/abstractmiddleware.h \
-    $$PWD/SHttpServer/controller.h \
-    $$PWD/SHttpServer/httpcommon.h \
-    $$PWD/SHttpServer/router.h \
-    $$PWD/SHttpServer/shttprequest.h \
-    $$PWD/SHttpServer/shttpresponse.h \
-    $$PWD/SHttpServer/shttpserver.h \
-    $$PWD/SHttpServer/ssockethandler.h \
-    $$PWD/SHttpServer/testcontroller.h
+    $$PWD/src/abstractmiddleware.h \
+    $$PWD/src/controller.h \
+    $$PWD/src/httpcommon.h \
+    $$PWD/src/router.h \
+    $$PWD/src/shttprequest.h \
+    $$PWD/src/shttpresponse.h \
+    $$PWD/src/shttpserver.h \
+    $$PWD/src/ssockethandler.h \
+    $$PWD/src/testcontroller.h
