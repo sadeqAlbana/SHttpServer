@@ -4,12 +4,13 @@ find_package(Qt6  COMPONENTS Core REQUIRED)
 find_package(Qt6  COMPONENTS Network REQUIRED)
 add_library(SHttpServer STATIC
     abstractmiddleware.h abstractmiddleware.cpp
-	controller.h controller.cpp
+    controller.h controller.cpp
     router.h router.cpp
-shttprequest.h shttprequest.cpp
-shttpresponse.h shttpresponse.cpp
-shttpserver.h shttpserver.cpp
-ssockethandler.h ssockethandler.cpp
+    shttprequest.h shttprequest.cpp
+    shttpresponse.h shttpresponse.cpp
+    shttpserver.h shttpserver.cpp
+    ssockethandler.h ssockethandler.cpp
+    httpcommon.h httpcommon.cpp
 
 )
 

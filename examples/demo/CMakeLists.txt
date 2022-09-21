@@ -18,8 +18,7 @@ add_executable(demo
   main.cpp
   key/key.qrc
 )
-target_link_libraries(demo Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Network)
-target_link_libraries(demo PRIVATE SHttpServer)
+target_link_libraries(demo Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Network SHttpServer)
 
 install(TARGETS demo
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})

@@ -12,7 +12,7 @@
 #include <exception>
 #include "shttpresponse.h"
 #include "shttprequest.h"
-#include "testcontroller.h"
+
 #include <QThread>
 Router::Router()
 {
