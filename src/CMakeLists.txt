@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.16)
 
-find_package(Qt6  COMPONENTS Core REQUIRED)
-find_package(Qt6  COMPONENTS Network REQUIRED)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Network)
+
 add_library(SHttpServer STATIC
     abstractmiddleware.h abstractmiddleware.cpp
     controller.h controller.cpp
@@ -14,7 +16,6 @@ add_library(SHttpServer STATIC
 
 )
 
-target_link_libraries(SHttpServer PRIVATE Qt6::Core)
-target_link_libraries(SHttpServer PRIVATE Qt6::Network)
+target_link_libraries(SHttpServer PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Network)
 
 target_include_directories(SHttpServer INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
