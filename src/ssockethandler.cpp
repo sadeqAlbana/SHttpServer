@@ -19,22 +19,39 @@
 SSocketHandler::SSocketHandler(const qintptr &socketDescriptor, const Router &router,
                                const ConnectionRoutineCallBackList &cCallbacks,
                                const RequestRoutineCallBackList &rCallbacks,
+                               const ConnectionRoutineCallBackList &acCallbacks,
+                               const RequestRoutineCallBackList &arCallbacks,
                                const QSslConfiguration &sslConfig,
                                QObject *parent): QObject(parent),
-    m_socketDescriptor(socketDescriptor)
-  ,m_closeTimer(this),m_router(new Router(router)),m_sslConfig(sslConfig),
+    m_socketDescriptor(socketDescriptor),
+  m_closeTimer(this),
+    m_currentHttpRequest(nullptr),
+    m_router(new Router(router)),m_sslConfig(sslConfig),
     m_connectionCallbacks(cCallbacks),
-    m_requestCallbacks(rCallbacks)
+    m_requestCallbacks(rCallbacks),
+    m_afterConnectionCallbacks(acCallbacks),
+    m_afterRequestCallbacks(arCallbacks)
 {
     //be warned that the constructor is created on the main thread !
     m_closeTimer.setInterval(10*3000);
     m_closeTimer.setSingleShot(true);
+    connect(this,&SSocketHandler::finished,[this](){
+        bool passedRoutines=true;
+        for(const ConnectionRoutineCallBack &routine : m_afterConnectionCallbacks){
+            passedRoutines=routine(this);
+            if(!passedRoutines){
+                //return some sort of error, maybe catch an exception !
+                break;
+            }
+        }
+    });
 }
 
 SSocketHandler::~SSocketHandler()
 {
     //qDebug()<<Q_FUNC_INFO;
     delete m_router;
+    delete m_currentHttpRequest;
     m_socket->deleteLater();
 }
 
@@ -126,18 +143,20 @@ void SSocketHandler::onRequestFinished()
 
     //m_bytesToWrite=-1;
 
-    SHttpRequest request;
-    request.m_url=m_currentRequest.m_path;
-    request.m_body=m_currentRequest.m_body;
-    request.m_headers=m_currentRequest.m_headersPairs;
-    request.m_operation=Http::methodtoEnum(m_currentRequest.m_method);
-    request.m_remoteAddress=m_socket->peerAddress().toString();
+     delete m_currentHttpRequest;
+     m_currentHttpRequest=new SHttpRequest();
+
+    m_currentHttpRequest->m_url=m_currentRequest.m_path;
+    m_currentHttpRequest->m_body=m_currentRequest.m_body;
+    m_currentHttpRequest->m_headers=m_currentRequest.m_headersPairs;
+    m_currentHttpRequest->m_operation=Http::methodtoEnum(m_currentRequest.m_method);
+    m_currentHttpRequest->m_remoteAddress=m_socket->peerAddress().toString();
 
 
     //call routines
     bool passedRoutines=true;
     for(const RequestRoutineCallBack &routine : m_requestCallbacks){
-        passedRoutines=routine(&request);
+        passedRoutines=routine(m_currentHttpRequest);
         if(!passedRoutines){
             //return some sort of error, maybe catch an exception !
             break;
@@ -145,8 +164,7 @@ void SSocketHandler::onRequestFinished()
     }
 
 
-    SHttpResponse res = m_router->route(&request);
-    QByteArray m_body=QByteArray();
+    SHttpResponse res = m_router->route(m_currentHttpRequest);
     QByteArray replyData=toRawData(res.data());
     QString contentType=res.headers().contains("content-type")? res.headers().value("Content-Type") : mapContentType(res.data().type());
     QString replyTextFormat=QString(
@@ -180,6 +198,16 @@ void SSocketHandler::onBytesWritten(qint64 bytes)
 {
 
     if(m_socket->bytesToWrite()<=0){ //>=
+
+        bool passedRoutines=true;
+        for(const RequestRoutineCallBack &routine : m_afterRequestCallbacks){
+            passedRoutines=routine(m_currentHttpRequest);
+            if(!passedRoutines){
+                //return some sort of error, maybe catch an exception !
+                break;
+            }
+        }
+
         // if(response if fully written, then check the Connection header to determine wether to close the connection or not
 
         if(m_currentRequest.m_headersPairs.contains("Connection")){

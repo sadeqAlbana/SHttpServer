@@ -32,8 +32,10 @@ public:
     /*parameter callback routine will be called after each new http request including the ones using the same connection*/
     void installRequestRoutine(RequestRoutineCallBack routine);
 
-    //void installRequestFinishRoutine(RequestFinishRoutineCallBack routine); //to be implemented
-    //void installConnectionEndRoutine(ConnectionEndRoutineCallBack routine); //to be implemented
+
+
+    void installafterRequestRoutine(RequestRoutineCallBack routine); //to be implemented
+    void installafterConnectionRoutine(ConnectionRoutineCallBack routine); //to be implemented
 
 signals:
 
@@ -42,6 +44,9 @@ private:
     QSslConfiguration m_sslConfig;
     ConnectionRoutineCallBackList m_connectionCallbacks;
     RequestRoutineCallBackList m_requestCallbacks;
+
+    ConnectionRoutineCallBackList m_afterConnectionCallbacks;
+    RequestRoutineCallBackList m_afterRequestCallbacks;
 
 
 };

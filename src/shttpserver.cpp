@@ -61,7 +61,7 @@ bool SHttpServer::setSSlConfiguration(const QString &crtFilePath, const QString 
     m_sslConfig.setPeerVerifyDepth( 1 );
     m_sslConfig.setLocalCertificate( sslCertificate );
     m_sslConfig.setPrivateKey( sslKey );
-    m_sslConfig.setProtocol( QSsl::TlsV1_1OrLater );
+    m_sslConfig.setProtocol( QSsl::TlsV1_2OrLater );
     m_sslConfig.setCaCertificates( caCertificates );
 
     return true;
@@ -77,6 +77,17 @@ void SHttpServer::installRequestRoutine(RequestRoutineCallBack routine)
     m_requestCallbacks << routine;
 }
 
+void SHttpServer::installafterRequestRoutine(RequestRoutineCallBack routine)
+{
+    m_afterRequestCallbacks << routine;
+
+}
+
+void SHttpServer::installafterConnectionRoutine(ConnectionRoutineCallBack routine)
+{
+    m_afterConnectionCallbacks << routine;
+}
+
 
 /*Note: If you want to handle an incoming connection as a new QTcpSocket object in another thread
  *  you have to pass the socketDescriptor to the other thread and create the QTcpSocket object there
@@ -85,7 +96,10 @@ void SHttpServer::installRequestRoutine(RequestRoutineCallBack routine)
 void SHttpServer::incomingConnection(qintptr socketDescriptor)
 {
     //qInfo()<< "New Connection !";
-    SSocketHandler *handler=new SSocketHandler(socketDescriptor,*this,m_connectionCallbacks,m_requestCallbacks,m_sslConfig);
+    SSocketHandler *handler=new SSocketHandler(socketDescriptor,*this,
+                                               m_connectionCallbacks,m_requestCallbacks,
+                                               m_afterConnectionCallbacks,m_afterRequestCallbacks,
+                                               m_sslConfig);
     QThread *thread = new QThread();
     handler->moveToThread(thread);
     connect(thread,&QThread::started,handler,&SSocketHandler::run,Qt::QueuedConnection);

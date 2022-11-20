@@ -48,6 +48,9 @@ public:
                             const Router &router,
                             const ConnectionRoutineCallBackList &cCallbacks=ConnectionRoutineCallBackList(),
                             const RequestRoutineCallBackList &rCallbacks = RequestRoutineCallBackList(),
+
+                            const ConnectionRoutineCallBackList &acCallbacks=ConnectionRoutineCallBackList(),
+                            const RequestRoutineCallBackList &arCallbacks = RequestRoutineCallBackList(),
                             const QSslConfiguration &sslConfig=QSslConfiguration(), QObject *parent = nullptr);
     virtual ~SSocketHandler();
     void run();
@@ -75,12 +78,17 @@ private:
     QByteArray m_buffer;
     QTimer m_closeTimer;
     SHttpRequestManifest m_currentRequest;
+    SHttpRequest  *m_currentHttpRequest;
+
     //qint64 m_bytesToWrite=-1;
     //qint64 m_bytesWritten=0;
     Router *m_router;
     QSslConfiguration m_sslConfig;
     ConnectionRoutineCallBackList m_connectionCallbacks;
     RequestRoutineCallBackList m_requestCallbacks;
+
+    ConnectionRoutineCallBackList m_afterConnectionCallbacks;
+    RequestRoutineCallBackList m_afterRequestCallbacks;
 };
 
 #endif // SSOCKETHANDLER_H
