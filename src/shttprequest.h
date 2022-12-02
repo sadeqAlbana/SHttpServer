@@ -43,7 +43,7 @@ public:
 
 
     QByteArray header(QByteArray key);
-    QByteArray mapContentType(const QVariant::Type type);
+    QByteArray mapContentType(const QMetaType::Type type);
     //
     QByteArray toRawData(const QVariant &data);
 

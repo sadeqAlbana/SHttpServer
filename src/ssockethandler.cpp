@@ -166,7 +166,7 @@ void SSocketHandler::onRequestFinished()
 
     SHttpResponse res = m_router->route(m_currentHttpRequest);
     QByteArray replyData=toRawData(res.data());
-    QString contentType=res.headers().contains("content-type")? res.headers().value("Content-Type") : mapContentType(res.data().type());
+    QString contentType=res.headers().contains("content-type")? res.headers().value("Content-Type") : mapContentType(res.data().typeId());
     QString replyTextFormat=QString(
            "HTTP/1.1 %1 OK\r\n"
            "Content-Type: %2\r\n"
@@ -360,7 +360,7 @@ QByteArray SSocketHandler::mapContentType(const int &type)
 
 QByteArray SSocketHandler::toRawData(const QVariant &data)
 {
-    QMetaType::Type type=static_cast<QMetaType::Type>(data.type());
+    QMetaType::Type type=static_cast<QMetaType::Type>(data.typeId());
 
     /**************************json**************************/
     if(type==QMetaType::QJsonObject)
